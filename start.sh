@@ -32,7 +32,7 @@ aws secretsmanager put-secret-value --secret-id $SECRET_ARN --secret-string file
 
 # Recursive Copy Data to S3 Buckets
 echo "Uploading pre-staged data to S3"
-aws s3 cp extracted/ s3://$EXTRACTED_BUCKET/ --recursive
-aws s3 cp zipcode/ s3://$ZIPCODE_BUCKET/ --recursive
+aws s3 cp init/extracted/ s3://$EXTRACTED_BUCKET/ --recursive
+aws s3 cp init/zipcode/ s3://$ZIPCODE_BUCKET/ --recursive
 
 exit 0

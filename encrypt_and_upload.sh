@@ -10,16 +10,16 @@ export TRANSFER_ENDPOINT=`aws cloudformation describe-stacks | jq -r --arg STACK
 export TRANSFER_ENDPOINT+=.server.transfer.us-east-1.amazonaws.com
 
 # Make directory for encrypted files
-mkdir encrypted/
+mkdir init/encrypted/
 
 # Encrypt raw files using GPG key
 echo "Encrypting .png W2 files for upload"
-sudo gpg --encrypt-files -r SFTPUser@example.com raw/*.png
+sudo gpg --encrypt-files -r SFTPUser@example.com init/raw/*.png
 sleep 3
 
 # Move encrypted files to encrypted directory
 echo "Moving GPG encrypted files to encrypted directory"
-mv raw/*.png.gpg encrypted/
+mv init/raw/*.png.gpg init/encrypted/
 sleep 3
 
 # Prompt user for password for SFTP connection string
@@ -29,6 +29,6 @@ echo
 
 # Connect to SFTP server and SFTP multiple files to the AWS Transfer Family Server
 echo "Initiating SFTP of encrypted files to AWS Transfer Family Server"
-lftp sftp://SFTPUser:$SFTP_PASSWORD@$TRANSFER_ENDPOINT  -e "mput encrypted/*.png.gpg; bye"
+lftp sftp://SFTPUser:$SFTP_PASSWORD@$TRANSFER_ENDPOINT  -e "mput init/encrypted/*.png.gpg; bye"
 
 exit 0

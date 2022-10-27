@@ -5,7 +5,7 @@ sudo yum install lftp -y
 
 # Set variables from CFN Output
 # # We will change the STACK_NAME variable to use the module ID once we have it
-export STACK_NAME=TF-reInvent-2022
+export STACK_NAME=transferfamilyworkflow
 export TRANSFER_ENDPOINT=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="TransferFamilyServerEndpoint") | .OutputValue'`
 export TRANSFER_ENDPOINT+=.server.transfer.us-east-1.amazonaws.com
 

@@ -19,7 +19,7 @@ EOF
 
 # Exports Variables from CloudFormation
 # We will change the STACK_NAME variable to use the module ID once we have it
-export STACK_NAME=TF-reInvent-2022
+export STACK_NAME=transferfamilyworkflow
 export EXTRACTED_BUCKET=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="ExtractedDataS3BucketName") | .OutputValue'`
 export ZIPCODE_BUCKET=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="ZipcodeDataS3BucketName") | .OutputValue'`
 export SECRET_ARN=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="PGPSecretARN") | .OutputValue'`

@@ -23,7 +23,7 @@ export STACK_NAME=transferfamilyworkflow
 export EXTRACTED_BUCKET=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="ExtractedDataS3BucketName") | .OutputValue'`
 export ZIPCODE_BUCKET=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="ZipcodeDataS3BucketName") | .OutputValue'`
 export SECRET_ARN=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="PGPSecretARN") | .OutputValue'`
-export GLUE_ASSETS_BUCKET=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="GlueAssetsS3BucketName) | .OutputValue'`
+export GLUE_ASSETS_BUCKET=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="GlueAssetsS3BucketName") | .OutputValue'`
 export PROCESSED_BUCKET=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="ProcessedDataS3BucketName") | .OutputValue'`
 export GLUE_SERVICE_ROLE_ARN=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="DataLakeGlueServiceRoleArn") | .OutputValue'`
 

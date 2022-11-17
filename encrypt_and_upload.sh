@@ -3,10 +3,13 @@
 # Install lftp to perform non-interactive connection to AWS Transfer Family SFTP Server
 sudo yum install lftp -y &>/dev/null
 
+# Store current AWS Region as variables
+AWS_REGION=`aws configure get region`
+
 # Set variables from CFN Output
 export STACK_NAME=transferfamilyworkflow
 export TRANSFER_ENDPOINT=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="TransferFamilyServerEndpoint") | .OutputValue'`
-export TRANSFER_ENDPOINT+=.server.transfer.us-east-1.amazonaws.com
+export TRANSFER_ENDPOINT+=.server.transfer.$AWS_REGION.amazonaws.com
 export SFTPUSER_SECRETARN=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="SFTPUserSecretARN") | .OutputValue'`
 
 # Store SFTPUser Password from Secret as variable

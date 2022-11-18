@@ -16,7 +16,7 @@ export SFTPUSER_SECRETARN=`aws cloudformation describe-stacks | jq -r --arg STAC
 SFTP_SECRET=`aws secretsmanager get-secret-value --secret-id $SFTPUSER_SECRETARN`
 export SFTP_PASSWORD=`echo $SFTP_SECRET | jq -r '.SecretString' | jq -r '.Password'`
 
-#Cleanup encrypted files in case of re-run
+# Cleanup encrypted files in case of re-run
  rm -rf init/encrypted
  rm -rf init/raw/*.gpg
 

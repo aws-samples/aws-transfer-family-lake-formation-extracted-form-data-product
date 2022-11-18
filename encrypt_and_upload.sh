@@ -16,6 +16,10 @@ export SFTPUSER_SECRETARN=`aws cloudformation describe-stacks | jq -r --arg STAC
 SFTP_SECRET=`aws secretsmanager get-secret-value --secret-id $SFTPUSER_SECRETARN`
 export SFTP_PASSWORD=`echo $SFTP_SECRET | jq -r '.SecretString' | jq -r '.Password'`
 
+# Cleanup encrypted files in case of re-run
+ rm -rf init/encrypted
+ rm -rf init/raw/*.gpg
+
 # Make directory for encrypted files
 mkdir init/encrypted/
 
@@ -31,7 +35,7 @@ sleep 3
 
 # Connect to SFTP server and SFTP multiple files to the AWS Transfer Family Server
 echo "Initiating SFTP of encrypted files to AWS Transfer Family Server"
-lftp sftp://SFTPUser:$SFTP_PASSWORD@$TRANSFER_ENDPOINT  -e "mput init/encrypted/*.png.gpg; bye"
+lftp sftp://SFTPUser:$SFTP_PASSWORD@$TRANSFER_ENDPOINT  -e "mput -c init/encrypted/*.png.gpg; bye"
 echo "SFTP of encrypted files complete"
 
 exit 0

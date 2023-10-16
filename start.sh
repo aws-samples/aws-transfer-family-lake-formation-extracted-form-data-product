@@ -17,6 +17,9 @@ Expire-Date: 0
 %no-protection
 EOF
 
+# Store current AWS Region as variables
+AWS_REGION=`aws configure get region`
+
 # Exports Variables from CloudFormation
 # We will change the STACK_NAME variable to use the module ID once we have it
 export STACK_NAME=transferfamilyworkflow
@@ -26,20 +29,35 @@ export SECRET_ARN=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "
 export GLUE_ASSETS_BUCKET=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="GlueAssetsS3BucketName") | .OutputValue'`
 export PROCESSED_BUCKET=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="ProcessedDataS3BucketName") | .OutputValue'`
 export GLUE_SERVICE_ROLE_ARN=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="DataLakeGlueServiceRoleArn") | .OutputValue'`
+export TRANSFER_REPORTS_ENDPOINT=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="TransferFamilyReportsServerEndpoint") | .OutputValue'`
+export REPORTS_CONNECTOR=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="ReportsSFTPConnector") | .OutputValue'`
+export REPORTS_BUCKET=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="ReportsDataS3BucketName") | .OutputValue'`
 
-# Put Private Key in Secrets Manager
+# Read host key from reports server and update TrustedHostKeys parameter in AWS Transfer connector
+export TRANSFER_REPORTS_ENDPOINT+=.server.transfer.$AWS_REGION.amazonaws.com
+ssh-keyscan $TRANSFER_REPORTS_ENDPOINT > /tmp/keyscan.tmp
+export HOST_KEY=`cat /tmp/keyscan.tmp | grep -o 'ssh-rsa.*'`
+aws transfer update-connector --connector-id $REPORTS_CONNECTOR --sftp-config 'TrustedHostKeys='"$HOST_KEY"''
+# Create an empty reports folder in the reports bucket so that the folder appears if directories are listed on the reports SFTP server
+aws s3api put-object --bucket $REPORTS_BUCKET --key reports/ 
+
+# Put Private Key into Secrets Manager
 echo "Uploading GPG Private Key to AWS Secrets Manager"
-touch private.key
-sudo gpg --export-secret-key -a SFTPUser > private.key
-aws secretsmanager put-secret-value --secret-id $SECRET_ARN --secret-string file://private.key
+private_key=`sudo gpg --export-secret-key -a SFTPUser`
+aws secretsmanager put-secret-value --secret-id $SECRET_ARN --secret-string '{"PGPPrivateKey" : "'"$private_key"'"}'
+
 
 # Recursive Copy Data to S3 Buckets
 echo "Uploading pre-staged data to S3"
 aws s3 cp init/extracted/ s3://$EXTRACTED_BUCKET/ --recursive
 aws s3 cp init/zipcode/ s3://$ZIPCODE_BUCKET/ --recursive
 
-# Copy Glue job script to s3 bucket
+# Copy Glue job scripts to s3 bucket
 aws s3 cp init/glue/W2_ETL_Job.py s3://$GLUE_ASSETS_BUCKET/scripts/W2_ETL_Job.py
+aws s3 cp init/glue/Report.py s3://$GLUE_ASSETS_BUCKET/scripts/Report.py
+
+# Copy report HTML into reports bucket
+aws s3 cp init/reportsite/ s3://$REPORTS_BUCKET/ --recursive
 
 # Create glue job
 aws glue delete-job --job-name W2_ETL_Job

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 # Installs Packages
 sudo yum install jq -y
@@ -32,6 +33,7 @@ export GLUE_SERVICE_ROLE_ARN=`aws cloudformation describe-stacks | jq -r --arg S
 export TRANSFER_REPORTS_ENDPOINT=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="TransferFamilyReportsServerEndpoint") | .OutputValue'`
 export REPORTS_CONNECTOR=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="ReportsSFTPConnector") | .OutputValue'`
 export REPORTS_BUCKET=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="ReportsDataS3BucketName") | .OutputValue'`
+export REPORTS_CONNECTOR=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "transferfamilyworkflow" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="ReportsSFTPConnector") | .OutputValue'`
 
 # Read host key from reports server and update TrustedHostKeys parameter in AWS Transfer connector
 export TRANSFER_REPORTS_ENDPOINT+=.server.transfer.$AWS_REGION.amazonaws.com
@@ -46,6 +48,8 @@ echo "Uploading GPG Private Key to AWS Secrets Manager"
 private_key=`sudo gpg --export-secret-key -a SFTPUser`
 aws secretsmanager put-secret-value --secret-id $SECRET_ARN --secret-string '{"PGPPrivateKey" : "'"$private_key"'"}'
 
+# Precreate a log group for the connector so it exists when aws logs tail is run.
+aws logs create-log-group --log-group-name /aws/transfer/$REPORTS_CONNECTOR
 
 # Recursive Copy Data to S3 Buckets
 echo "Uploading pre-staged data to S3"

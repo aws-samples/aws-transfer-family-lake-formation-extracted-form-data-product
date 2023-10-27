@@ -46,7 +46,7 @@ aws s3api put-object --bucket $REPORTS_BUCKET --key reports/
 # Put Private Key into Secrets Manager
 echo "Uploading GPG Private Key to AWS Secrets Manager"
 private_key=`sudo gpg --export-secret-key -a SFTPUser`
-aws secretsmanager put-secret-value --secret-id $SECRET_ARN --secret-string '{"PGPPrivateKey" : "'"$private_key"'"}'
+aws secretsmanager put-secret-value --secret-id $SECRET_ARN --secret-string '{"PGPPrivateKey" : "'"${private_key//$'\n'/ }"'"}'
 
 # Precreate a log group for the connector so it exists when aws logs tail is run.
 aws logs create-log-group --log-group-name /aws/transfer/$REPORTS_CONNECTOR

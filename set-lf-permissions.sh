@@ -5,9 +5,9 @@ export ACCOUNT=`aws sts get-caller-identity --query 'Account' --output text`
 
 export AWS_REGION=`aws configure get region`
 
-aws glue update-database --name employee_tax_db --database-input '{"Name": "employee_tax_db", "CreateTableDefaultPermissions": []}'
+aws lakeformation grant-permissions --catalog-id $ACCOUNT --principal DataLakePrincipalIdentifier="arn:aws:iam::$ACCOUNT:role/TransferLab-LF-ColumnConstraint" --resource '{"TableWithColumns": {"CatalogId": "'$ACCOUNT'", "DatabaseName": "employee_tax_db", "Name":"transformed_w2_data", "ColumnWildcard": {"ExcludedColumnNames": ["employee_socialsecurity_number"]} }}' --permissions SELECT
+aws lakeformation delete-data-cells-filter --table-catalog-id $ACCOUNT --database-name employee_tax_db --table-name transformed_w2_data --name row-filter
+aws lakeformation create-data-cells-filter --table-data '{"TableCatalogId": "'$ACCOUNT'", "DatabaseName": "employee_tax_db", "TableName": "transformed_w2_data", "Name": "row-filter", "RowFilter": { "FilterExpression": "employer_name = '"'"'ExampleCorp Technology Inc'"'"'"}, "ColumnWildcard": {}}'
+aws lakeformation grant-permissions --catalog-id $ACCOUNT --principal DataLakePrincipalIdentifier="arn:aws:iam::$ACCOUNT:role/TransferLab-LF-RowConstraint" --resource '{"DataCellsFilter": {"TableCatalogId": "'$ACCOUNT'", "DatabaseName": "employee_tax_db", "TableName":"transformed_w2_data", "Name": "row-filter"}}' --permissions SELECT
 
-aws lakeformation grant-permissions --catalog-id $ACCOUNT --principal DataLakePrincipalIdentifier="arn:aws:iam::$ACCOUNT:role/service-role/TransferLab-AWSGlueServiceRole" --resource '{"Database": {"CatalogId": "'$ACCOUNT'", "Name": "employee_tax_db"}}' --permissions ALL
-aws lakeformation grant-permissions --catalog-id $ACCOUNT --principal DataLakePrincipalIdentifier="arn:aws:iam::$ACCOUNT:role/service-role/TransferLab-AWSGlueServiceRole" --resource '{"Table": {"CatalogId": "'$ACCOUNT'", "DatabaseName": "employee_tax_db", "Name":"irs_tax_info_by_zip_2019" }}' --permissions SELECT
-aws lakeformation revoke-permissions --catalog-id $ACCOUNT --principal DataLakePrincipalIdentifier="IAM_ALLOWED_PRINCIPALS" --resource '{"Table": {"CatalogId": "'$ACCOUNT'", "DatabaseName": "employee_tax_db", "Name":"irs_tax_info_by_zip_2019" }}' --permissions ALL
-aws lakeformation register-resource --resource-arn arn:aws:s3:::transferlab-processed-$ACCOUNT --use-service-linked-role --no-hybrid-access-enabled
+

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 # Install lftp to perform non-interactive connection to AWS Transfer Family SFTP Server
 sudo yum install lftp -y &>/dev/null
@@ -11,6 +12,7 @@ export STACK_NAME=transferfamilyworkflow
 export TRANSFER_ENDPOINT=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="TransferFamilyServerEndpoint") | .OutputValue'`
 export TRANSFER_ENDPOINT+=.server.transfer.$AWS_REGION.amazonaws.com
 export SFTPUSER_SECRETARN=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="SFTPUserSecretARN") | .OutputValue'`
+export INGEST_BUCKET=`aws cloudformation describe-stacks | jq -r --arg STACK_NAME "$STACK_NAME" '.Stacks[] | select(.StackName==$STACK_NAME) | .Outputs[] | select(.OutputKey=="IngestS3BucketName") | .OutputValue'`
 
 # Store SFTPUser Password from Secret as variable
 SFTP_SECRET=`aws secretsmanager get-secret-value --secret-id $SFTPUSER_SECRETARN`
@@ -19,6 +21,7 @@ export SFTP_PASSWORD=`echo $SFTP_SECRET | jq -r '.SecretString' | jq -r '.Passwo
 # Cleanup encrypted files in case of re-run
  rm -rf init/encrypted
  rm -rf init/raw/*.gpg
+ aws s3 rm s3://$INGEST_BUCKET/ --recursive
 
 # Make directory for encrypted files
 mkdir init/encrypted/
